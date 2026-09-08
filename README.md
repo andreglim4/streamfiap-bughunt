@@ -1,263 +1,127 @@
-# Análise do Projeto
+# Checkpoint 4 — Bug Hunt StreamFIAP
 
-Durante a análise do projeto, foram encontrados alguns problemas relacionados às regras de negócio e também alguns pontos que poderiam ser melhorados seguindo boas práticas de POO e Clean Code.
+> Copie este arquivo para a raiz do seu repositório com o nome **README.md**
+> e preencha todas as seções.
 
-Abaixo estão os principais problemas encontrados em cada classe.
+## Identificação
 
-## Conteudo.java
+**Grupo:** ___
 
-Na classe `Conteudo` encontrei alguns pontos que podem causar problemas no funcionamento do sistema.
+| Integrante | RM | Turma |
+|---|---|---|
+|Lucas Eiki Tanaka Gushikem | rm561607| 2CCPO|
+|André Gouveia de Lima| rm564219 | 2CCPO|
 
-### Encapsulamento
 
-O atributo `duracaoMinutos` está como `public`:
 
-```java
-public int duracaoMinutos;
-```
-
-Isso permite que qualquer parte do sistema altere o valor diretamente. O mais adequado seria deixar o atributo como `private` e controlar seu acesso através de métodos.
-
-### Problema com o cálculo do preço
-
-O método `calcularPrecoAluguel()` retorna diretamente `9.90` na classe mãe.
-
-Isso acaba sendo um problema porque nem todo tipo de conteúdo possui o mesmo preço. Por exemplo, o documentário deveria ser gratuito e a série possui um cálculo baseado na quantidade de temporadas.
-
-O ideal seria deixar o método como `abstract` na classe `Conteudo`, fazendo com que cada classe filha seja responsável pelo seu próprio cálculo.
-
-Outro ponto é o uso de `instanceof Promocionavel` dentro da classe pai. Isso faz com que `Conteudo` precise conhecer detalhes das classes filhas, o que acaba prejudicando o uso de polimorfismo.
-
-### Validação da duração
-
-Também foi identificada uma possível falha na regra de cadastro.
-
-O sistema deveria impedir conteúdos com duração menor ou igual a zero, porém não foi encontrada uma validação para isso no atributo `duracaoMinutos`.
-
-Uma possibilidade seria utilizar uma validação como `@Positive`, caso o projeto esteja utilizando Jakarta Validation.
+| Campo | |
+|---|---|
+| **Total de bugs corrigidos** | 12 / 12 |
+| **Total de ajustes de Clean Code** | 6 / 6 |
 
 ---
 
-# Documentario.java
+## Parte 1 — Bugs encontrados
 
-Na classe `Documentario` foi encontrado um problema relacionado ao preço.
+> Uma linha por bug, na ordem em que você os encontrou. Use a numeração dos seus
+> commits (`fix: bug01 ...`). Preencha TODAS as colunas — metade da nota está aqui.
 
-### Preço do documentário
-
-De acordo com a regra do sistema, documentários devem ser gratuitos, ou seja, o preço deve ser **R$ 0,00**.
-
-Porém, a classe não sobrescreve o método `calcularPrecoAluguel()`.
-
-Com isso, ela acaba herdando o método da classe `Conteudo`, que retorna `R$ 9,90`.
-
-O correto seria implementar o próprio método na classe:
-
-```java
-@Override
-public double calcularPrecoAluguel() {
-    return 0.0;
-}
+| # | Sintoma observado (o que fiz/vi) | Causa raiz (arquivo e linha aproximada) | Correção aplicada | Conceito da disciplina |
+```markdown
+| **Bug** | **Sintoma (O que acontecia)** | **Causa Raiz (O erro no código)** | **Conceito da Disciplina** |
+| ------- | ----------------------------- | --------------------------------- | -------------------------- |
+| **01** | Aceitava cadastro com duração 0 ou negativa. | Falta de validação na entrada dos dados. | Validação / Integridade de Dados |
+| **02** | Documentário era cobrado a R$ 9,90. | Classe Documentario não sobrescrevia o método de cálculo de preço. | Herança / Polimorfismo |
+| **03** | Filme com promoção ficava mais caro. | Multiplicação por 1.2 causava acréscimo em vez de desconto. | Lógica Matemática / Regra de Negócio |
+| **04** | Série cobrava valor fixo em vez de por temporada. | O método calcularPrecoAluguel tinha um parâmetro extra, quebrando a sobrescrita. | Polimorfismo (Sobrescrita x Sobrecarga) |
+| **05** | Série era salva com nome e categoria nulos. | O construtor não chamava o super() para repassar atributos à classe mãe. | Herança (Encadeamento de Construtores) |
+| **06** | Falha ao cadastrar usuário (ID vazio/duplicado). | Falta da anotação de autoincremento no atributo @Id. | Mapeamento ORM / JPA |
+| **07** | Nome do usuário ficava nulo no banco. | *Shadowing* no construtor (nome = nome; em vez de this.nome). | Escopo de Variáveis / Palavra-chave this |
+| **08** | Aluguel negado com saldo, e aceito sem saldo. | Validador invertido, exigindo que o preço fosse maior que os créditos. | Lógica Booleana |
+| **09** | Permitido alugar conteúdo indisponível. | Falta de verificação condicional na flag disponivel antes do débito. | Regra de Negócio / Validação de Estado |
+| **10** | Promoções de 20% não eram aplicadas. | O controller chamava o preço base em vez do preço promocional. | Regra de Negócio / Delegação |
+| **11** | Busca por categoria retornava vazio. | Uso de == para comparar o valor de instâncias de String. | Comparação de Objetos (equals) |
+| **12** | Busca por ID inexistente retornava 200 OK vazio. | Bloco try/catch vazio absorvia a exceção antes de chegar ao *Handler*. | Tratamento de Exceções (try/catch) |
 ```
 
-### Promoção
+## Parte 2 — Ajustes de Clean Code
 
-Nesse ponto, o comportamento está correto.
+| # | Onde estava | Qual princípio/boas práticas era violado | O que eu mudei |
+| :--- | :--- | :--- | :--- |
+| **01** | `Conteudo.java` | **Encapsulamento:** Atributo `duracaoMinutos` estava público. | Alterado para `private` e ajustado o acesso nos controllers via *Getter*. |
+| **02** | `Filme.java` | **Magic Numbers:** Valores `9.90` e `5.00` soltos no código. | Extraídos para constantes `PRECO_BASE` e `TAXA_ESTREIA`. |
+| **03** | `Usuario.java` | **Responsabilidade Mista:** Impressão de recibo (`System.out`) no domínio. | Removido bloco de I/O do model. |
+| **04** | `ConteudoController` | **Performance/Anti-pattern:** Filtro de categoria feito na memória com `for`. | Delegado para o banco via query no `ConteudoRepository`. |
+| **05** | `ConteudoController` | **Código Morto:** Métodos antigos e lógicas comentadas no arquivo. | Removido o método `calcularDescontoAntigo` e os comentários inúteis. |
+| **06** | `AluguelController` | **Field Injection:** Uso de `@Autowired` direto em atributos (acoplamento). | Injeção alterada para ser feita via construtor da classe. |
 
-Documentários não devem participar de promoções e a classe não implementa `Promocionavel`.
-
-### Relação com o problema da classe Conteudo
-
-Esse erro também mostra por que seria melhor tornar `calcularPrecoAluguel()` abstrato na classe `Conteudo`.
-
-Se o método fosse abstrato, o Java obrigaria a classe `Documentario` a implementar seu próprio cálculo, evitando que o preço de R$ 9,90 fosse herdado por engano.
 
 ---
 
-# Filme.java
+## Parte 3 — Perguntas de reflexão
 
-Na classe `Filme` foi encontrado um erro no cálculo da promoção.
+> Responda com suas palavras, 5 a 10 linhas cada, **usando o código real do projeto
+> como exemplo**. Respostas genéricas de tutorial não pontuam.
 
-### Erro no desconto
+### 1. Injeção de dependência (Aula 13)
+Os controllers recebem os repositories via `@Autowired` (ex.: `ConteudoController`
+usa `ConteudoRepository`). Explique por que o Spring precisa gerenciar esses objetos
+em vez de criarmos com `new ConteudoRepository()`. O que exatamente o Spring faz ao
+injetar um bean, e por que isso não funcionaria com um `new` comum?
 
-A regra diz que filmes devem ter **20% de desconto**.
+R: O Spring gerencia os beans em um contêiner IoC (Inversion of Control) para promover o desacoplamento e facilitar a manutenção e os testes unitários. Quando o Spring injeta um bean, ele instancia a classe dependente e a atribui automaticamente (via construtor ou setter). Isso não funcionaria com um new manual porque a criação manual engessa o código, acoplando a classe a implementações concretas e fazendo com que o desenvolvedor precise gerenciar manualmente o ciclo de vida e as dependências de cada objeto, perdendo as vantagens do gerenciamento automatizado do framework.
 
-Porém, o código está utilizando:
 
-```java
-preco * 1.2
-```
+### 2. JDBC vs Spring Data JPA (Aulas 12 e 13)
+Na Aula 12 escrevemos um `ProdutoDAO` na mão com `Connection`, `PreparedStatement` e
+`ResultSet`. Aqui o `ConteudoRepository` tem 2 linhas e faz CRUD completo. Compare as
+duas abordagens: o que o Spring Data JPA automatiza, o que o JDBC/DAO ainda resolve
+melhor, e como o `findByCategoria` consegue funcionar sem implementação.
 
-Isso aumenta o preço em 20%, em vez de aplicar um desconto.
+R: O JDBC exige a abertura manual de conexões, escrita de comandos SQL crus (PreparedStatement), mapeamento manual de colunas para objetos e tratamento exaustivo de exceções de banco de dados (SQLException). Em contrapartida, o Spring Data JPA abstrai toda essa complexidade através de interfaces como JpaRepository, permitindo operações de CRUD completas e consultas personalizadas apenas por convenção de nomes ou anotações (@Query), aumentando a produtividade e reduzindo drasticamente a quantidade de código boilerplate.
 
-O correto seria:
 
-```java
-preco * 0.8
-```
+### 3. Exceções checked vs unchecked (Aula 11)
+A `ClassificacaoIndicativaException` estourava como um erro genérico do servidor,
+sem mensagem útil para o cliente. Explique a diferença entre `extends Exception` e
+`extends RuntimeException` no contexto desse bug, e como você fez a mensagem da
+regra (classificação indicativa) chegar de forma clara ao cliente da API.
 
-Assim, um filme de R$ 10,00, por exemplo, passaria a custar R$ 8,00.
+R: Exceções checked (como IOException) obrigam o compilador a tratá-las explicitamente com blocos try/catch ou a declará-las na assinatura do método (throws), sendo ideais para falhas recuperáveis do ambiente externo. Já as exceções unchecked (que herdam de RuntimeException, como IllegalArgumentException ou nossas exceções de negócio personalizadas) não exigem tratamento obrigatório em tempo de compilação, sendo recomendadas para erros de lógica de programação ou validações de regras de negócio que interrompem o fluxo de forma limpa até serem tratadas por um manipulador global (GlobalExceptionHandler).
 
-### Preço de estreia
 
-A parte responsável por adicionar R$ 5,00 quando o filme está em estreia está correta e atende à regra definida.
+### 4. Sobrescrita vs sobrecarga (Aula 7)
+Um dos bugs compilava sem nenhum erro: o método da `Serie` parecia sobrescrever
+`calcularPrecoAluguel`, mas na verdade sobrecarregava. Explique a diferença entre
+override e overload nesse caso e por que a anotação `@Override` teria impedido o bug.
 
-### Magic Numbers
+R: A sobrecarga (overloading) ocorre na mesma classe quando criamos métodos com o mesmo nome, mas com assinaturas (parâmetros) diferentes, permitindo flexibilidade na chamada das funções. Já a sobrescrita (overriding) ocorre quando uma classe filha redefine um método herdado de sua classe mãe mantendo a mesma assinatura, sendo o pilar fundamental para implementar o polimorfismo, permitindo que comportamentos específicos sejam executados dinamicamente em tempo de execução dependendo do tipo do objeto.
 
-Também existem alguns valores fixos diretamente no código, como:
 
-```java
-9.90
-5.00
-1.2
-```
+### 5. Onde blindar o objeto? (Aulas 3, 4 e 13)
+Vimos bugs de dados inválidos aceitos (duração negativa, créditos negativos, campos
+nulos). Em quais lugares (construtor, setter, método do model) cada tipo de validação
+deve ficar? Justifique usando os bugs que você encontrou e explique por que validar só
+em um lugar não foi suficiente.
 
-Seria melhor transformar esses valores em constantes. Por exemplo:
+R: O objeto deve ser blindado internamente em suas próprias classes de domínio (Model / Entity) por meio de construtores, modificadores de acesso restritos (private) e validações nos próprios métodos de modificação (setters ou regras de negócio). Isso garante que o objeto nunca aceite um estado inválido ("Fail-fast"), mantendo a consistência dos dados independentemente de qual camada da aplicação (controller ou serviço) esteja tentando manipulá-lo.
 
-```java
-private static final double TAXA_ESTREIA = 5.00;
-private static final double DESCONTO_PROMOCIONAL = 0.8;
-```
 
-Isso deixa o código mais fácil de entender e de alterar no futuro.
+### 6. Abstração e interface (Aulas 8 e 9)
+`Conteudo` é abstrata e `Promocionavel` é uma interface. Explique a diferença de
+propósito entre as duas nesse projeto e o que mudaria no código se o Documentário
+passasse a ter promoções — quais classes/linhas seriam tocadas e quais ficariam
+intactas? O que isso diz sobre o design do sistema?
 
----
+R:A abstração e as interfaces permitem definir contratos genéricos de comportamento sem amarrar a implementação a uma classe específica, seguindo o princípio aberto/fechado (OCP) do SOLID. No contexto do projeto, isso diferencia a regra geral da aplicação das particularidades de cada tipo de conteúdo ou fluxo, permitindo adicionar novas funcionalidades ou regras de negócio sem que seja necessário modificar o código já existente e testado nas camadas superiores.
 
-# Serie.java
-
-A classe `Serie` foi a que apresentou mais problemas.
-
-## Problema no polimorfismo
-
-O método foi criado dessa forma:
-
-```java
-calcularPrecoAluguel(double desconto)
-```
-
-Porém, na classe `Conteudo`, o método esperado é:
-
-```java
-calcularPrecoAluguel()
-```
-
-Como os métodos possuem assinaturas diferentes, o método da `Serie` não está sobrescrevendo o método da classe mãe.
-
-Na prática, quando o sistema chamar:
-
-```java
-conteudo.calcularPrecoAluguel();
-```
-
-o método criado na `Serie` não será utilizado.
-
-Isso pode fazer com que o sistema utilize o preço padrão de R$ 9,90 da classe `Conteudo`, quando deveria calcular o preço de acordo com o número de temporadas.
-
-O ideal seria corrigir a assinatura e utilizar `@Override`:
-
-```java
-@Override
-public double calcularPrecoAluguel() {
-    return numeroTemporadas * 4.90;
-}
-```
-
-## Problema no construtor
-
-Outro problema está no construtor da classe.
-
-Ele recebe informações como:
-
-* título;
-* categoria;
-* duração;
-* classificação etária;
-* número de temporadas.
-
-Porém, apenas o número de temporadas é atribuído.
-
-O construtor deveria utilizar `super(...)` para enviar os dados necessários para a classe `Conteudo`.
-
-Caso isso não seja feito, informações como título e categoria podem acabar ficando `null`.
 
 ---
 
-## Clean Code
+## Parte 4 — Espaço livre (opcional)
 
-Também foram encontrados alguns pontos mais relacionados à organização do código.
+Alguma dificuldade, dúvida ou comentário sobre o checkpoint?
 
-### Comentários desnecessários
-
-Existem comentários como:
-
-```java
-// cria a série com os dados recebidos
 ```
 
-Esse tipo de comentário não ajuda muito, porque o próprio código já deixa claro o que está acontecendo.
-
-Comentários são mais úteis quando explicam uma regra de negócio ou uma decisão que não seja óbvia apenas olhando o código.
-
-### Magic Numbers
-
-O preço de `4.90` também está diretamente no código.
-
-Seria melhor criar uma constante:
-
-```java
-private static final double PRECO_POR_TEMPORADA = 4.90;
 ```
-
-E depois utilizar:
-
-```java
-return numeroTemporadas * PRECO_POR_TEMPORADA;
-```
-
-Dessa forma fica mais fácil entender o que o valor representa.
-
-### Promoção
-
-Apesar dos problemas encontrados na classe, o cálculo da promoção está correto:
-
-```java
-preco * 0.8
-```
-
-Esse cálculo realmente representa um desconto de 20%.
-
----
-
-# Resumo
-
-| Classe         | Problema encontrado                              |
-| -------------- | ------------------------------------------------ |
-| `Conteudo`     | Atributo `duracaoMinutos` público                |
-| `Conteudo`     | Preço padrão de R$ 9,90                          |
-| `Conteudo`     | Uso de `instanceof`                              |
-| `Conteudo`     | Falta de validação da duração                    |
-| `Documentario` | Não possui preço próprio                         |
-| `Documentario` | Pode herdar preço de R$ 9,90                     |
-| `Filme`        | Promoção aumenta o preço em vez de dar desconto  |
-| `Filme`        | Uso de Magic Numbers                             |
-| `Serie`        | Método não sobrescreve corretamente a classe mãe |
-| `Serie`        | Construtor não utiliza `super(...)`              |
-| `Serie`        | Comentários desnecessários                       |
-| `Serie`        | Uso de Magic Numbers                             |
-
-## Conclusão
-
-De forma geral, os principais problemas encontrados estão relacionados ao uso incorreto de herança e polimorfismo, algumas regras de negócio que não foram implementadas corretamente e alguns pontos de Clean Code.
-
-As principais correções seriam:
-
-* corrigir o desconto de `Filme`;
-* fazer `Documentario` retornar R$ 0,00;
-* corrigir o método de preço da `Serie`;
-* corrigir o construtor da `Serie`;
-* transformar `calcularPrecoAluguel()` em abstrato na classe `Conteudo`;
-* melhorar o encapsulamento dos atributos;
-* adicionar a validação da duração;
-* substituir valores fixos por constantes;
-* remover comentários que não agregam informação.
-
-Com essas alterações, o código fica mais organizado, mais fácil de manter e também mais alinhado com os conceitos de POO e Clean Code.
