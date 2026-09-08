@@ -27,22 +27,22 @@
 > commits (`fix: bug01 ...`). Preencha TODAS as colunas — metade da nota está aqui.
 
 | # | Sintoma observado (o que fiz/vi) | Causa raiz (arquivo e linha aproximada) | Correção aplicada | Conceito da disciplina |
-```markdown
-| **Bug** | **Sintoma (O que acontecia)** | **Causa Raiz (O erro no código)** | **Conceito da Disciplina** |
-| ------- | ----------------------------- | --------------------------------- | -------------------------- |
-| **01** | Aceitava cadastro com duração 0 ou negativa. | Falta de validação na entrada dos dados. | Validação / Integridade de Dados |
-| **02** | Documentário era cobrado a R$ 9,90. | Classe Documentario não sobrescrevia o método de cálculo de preço. | Herança / Polimorfismo |
-| **03** | Filme com promoção ficava mais caro. | Multiplicação por 1.2 causava acréscimo em vez de desconto. | Lógica Matemática / Regra de Negócio |
-| **04** | Série cobrava valor fixo em vez de por temporada. | O método calcularPrecoAluguel tinha um parâmetro extra, quebrando a sobrescrita. | Polimorfismo (Sobrescrita x Sobrecarga) |
-| **05** | Série era salva com nome e categoria nulos. | O construtor não chamava o super() para repassar atributos à classe mãe. | Herança (Encadeamento de Construtores) |
-| **06** | Falha ao cadastrar usuário (ID vazio/duplicado). | Falta da anotação de autoincremento no atributo @Id. | Mapeamento ORM / JPA |
-| **07** | Nome do usuário ficava nulo no banco. | *Shadowing* no construtor (nome = nome; em vez de this.nome). | Escopo de Variáveis / Palavra-chave this |
-| **08** | Aluguel negado com saldo, e aceito sem saldo. | Validador invertido, exigindo que o preço fosse maior que os créditos. | Lógica Booleana |
-| **09** | Permitido alugar conteúdo indisponível. | Falta de verificação condicional na flag disponivel antes do débito. | Regra de Negócio / Validação de Estado |
-| **10** | Promoções de 20% não eram aplicadas. | O controller chamava o preço base em vez do preço promocional. | Regra de Negócio / Delegação |
-| **11** | Busca por categoria retornava vazio. | Uso de == para comparar o valor de instâncias de String. | Comparação de Objetos (equals) |
-| **12** | Busca por ID inexistente retornava 200 OK vazio. | Bloco try/catch vazio absorvia a exceção antes de chegar ao *Handler*. | Tratamento de Exceções (try/catch) |
-```
+| :--- | :--- | :--- | :--- | :--- |
+| **01** | Aceitava cadastro com duração 0 ou negativa | `ConteudoController`: Falta de validação nos POSTs | Adicionado `if` validando se a duração é <= 0 | Validação de Dados |
+| **02** | Documentário era cobrado a R$ 9,90 | `Documentario`: Não sobrescrevia o método da classe mãe | Adicionado `@Override` retornando 0.0 | Herança / Polimorfismo |
+| **03** | Filme com promoção ficava mais caro | `Filme`: Multiplicação por 1.2 causava acréscimo | Alterado para `preco * 0.8` | Regra de Negócio |
+| **04** | Série cobrava valor fixo de R$ 9,90 | `Serie`: Parâmetro extra quebrava a sobrescrita | Removido parâmetro e ajustado cálculo por temporada | Sobrescrita de Métodos |
+| **05** | Série era salva com nome e categoria nulos | `Serie`: Construtor não repassava os dados à superclasse | Adicionada chamada `super(...)` no construtor | Encadeamento de Construtores |
+| **06** | Falha ao cadastrar usuário (ID vazio/duplicado) | `Usuario`: Faltava autoincremento no ID | Adicionada anotação `@GeneratedValue` | Mapeamento ORM / JPA |
+| **07** | Nome do usuário ficava nulo no banco | `Usuario`: Shadowing de variável no construtor (`nome = nome`) | Alterado para usar `this.nome = nome` | Palavra-chave `this` |
+| **08** | Aluguel negado com saldo, e aceito sem saldo | `Usuario`: Validador invertido (`preco >= creditos`) | Alterado para `this.creditos >= preco` | Lógica Booleana |
+| **09** | Permitido alugar conteúdo indisponível | `Usuario`: Falta de verificação condicional na flag `disponivel` | Adicionado `if (!c.isDisponivel())` lançando exceção | Validação de Estado |
+| **10** | Promoções de 20% não eram aplicadas | `Usuario`: O aluguel chamava o preço base | Alterado para chamar `calcularPrecoPromocional()` | Delegação de Comportamento |
+| **11** | Busca por categoria retornava vazio | `ConteudoController`: Uso de `==` para comparar `String` | Alterado para uso do método `.equals()` | Comparação de Objetos |
+| **12** | Busca por ID inexistente retornava 200 OK vazio | `ConteudoController`: Bloco `try/catch` vazio engolia o erro | Removido o `try/catch` para a exceção subir | Tratamento de Exceções |
+
+---
+
 
 ## Parte 2 — Ajustes de Clean Code
 
